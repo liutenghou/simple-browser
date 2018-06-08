@@ -12,6 +12,7 @@ import WebKit
 class ViewController: UIViewController, WKNavigationDelegate {
     
     var webView: WKWebView!
+    var progressView: UIProgressView!
     
 //    default loads view from storyboard
     override func loadView() {
@@ -25,9 +26,29 @@ class ViewController: UIViewController, WKNavigationDelegate {
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Open", style: .plain, target: self, action: #selector(openTapped))
         
+        //add observer
+        webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
+        
+        //progress bar
+        progressView = UIProgressView(progressViewStyle: .default)
+        progressView.sizeToFit()
+        let progressBarButton = UIBarButtonItem(customView: progressView)
+        
+        //create two bar button items
+        let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let refreshButton = UIBarButtonItem(barButtonSystemItem: .refresh, target: webView, action: #selector(webView.reload))
+        toolbarItems = [progressBarButton, spacer, refreshButton]
+        navigationController?.isToolbarHidden = false
+        
         let appleURL = URL(string:"https://www.apple.com")!
         webView.load(URLRequest(url:appleURL))
         webView.allowsBackForwardNavigationGestures = true
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress"{
+            progressView.progress = Float(webView.estimatedProgress)
+        }
     }
     
     @objc func openTapped(){
