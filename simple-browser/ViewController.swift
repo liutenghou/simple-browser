@@ -13,6 +13,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     var webView: WKWebView!
     var progressView: UIProgressView!
+    var allowedSites = ["apple.com", "google.com"]
     
 //    default loads view from storyboard
     override func loadView() {
@@ -40,8 +41,8 @@ class ViewController: UIViewController, WKNavigationDelegate {
         toolbarItems = [progressBarButton, spacer, refreshButton]
         navigationController?.isToolbarHidden = false
         
-        let appleURL = URL(string:"https://www.apple.com")!
-        webView.load(URLRequest(url:appleURL))
+        let initialURL = URL(string:"https://" + allowedSites[0])!
+        webView.load(URLRequest(url:initialURL))
         webView.allowsBackForwardNavigationGestures = true
     }
     
@@ -53,8 +54,9 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     @objc func openTapped(){
         let ac = UIAlertController(title: "Open page...", message: nil, preferredStyle: .actionSheet)
-        ac.addAction(UIAlertAction(title: "apple.com", style: .default, handler: openPage))
-        ac.addAction(UIAlertAction(title: "google.com", style: .default, handler: openPage))
+        for website in allowedSites{
+            ac.addAction(UIAlertAction(title: website, style: .default, handler: openPage))
+        }
         ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         ac.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItem
         present(ac, animated: true)
@@ -67,6 +69,21 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         title = webView.title
+    }
+    
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        let url = navigationAction.request.url
+        
+        if let host = url?.host{
+            for website in allowedSites{
+                if host.contains(website){
+                    decisionHandler(.allow)
+                    return
+                }
+            }
+        }
+        
+        decisionHandler(.cancel)
     }
 
     override func didReceiveMemoryWarning() {
